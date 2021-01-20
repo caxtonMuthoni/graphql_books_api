@@ -1,0 +1,87 @@
+"A date string with format `Y-m-d`, e.g. `2011-05-23`."
+scalar Date @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
+
+"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+type Query {
+    users: [User!]! @guard(with: ["api"]) @paginate(defaultCount: 10)
+    user(id: ID @eq): User @find
+
+    categories: [Category!]! @all
+    category(id: ID! @eq): Category @find 
+
+    books: [Book!]! @paginate(defaultCount: 8)
+    book(id: ID! @eq) : Book @find @guard(with: ["api"])
+
+    searchBook(search: String!): [Book]
+    featuredBooks(featured: Boolean! @eq): [Book] @paginate(defaultCount: 8)
+}
+
+type Mutation {
+    
+    createCategory(
+        name: String! @rules(apply: ["required", "unique:categories,name"])
+        ): Category! @create
+    updateCategory(
+        id: ID!
+        name: String! @rules(apply: ["required", "unique:categories,name"])
+    ): Category! @update
+    deleteCategory(id: ID!): Category! @delete
+
+
+    createBook(
+        title: String! @rules(apply: ["string","required", "min:10", "max:200", "unique:books"])
+        author: String!@rules(apply: ["string","required", "min:5", "max:200"])
+        image: String @rules(apply:["string", "url"])
+        link: String @rules(apply:["string", "url"])
+        description: String @rules(apply: ["string", "required", "min:100" ,"max:1000"])
+        featured: Boolean
+        category_id: Int! @rules(apply: ["required"])
+        ): Book! @create
+
+    updateBook(
+        id: ID!
+        title: String! @rules(apply: ["string","required", "min:10", "max:200"])
+        author: String!@rules(apply: ["string", "required", "min:5", "max:200"])
+        image: String @rules(apply:["string", "url"])
+        link: String @rules(apply:["string", "url"])
+        description: String @rules(apply: ["string", "required", "min:100", "max:1000" ])
+        featured: Boolean
+        category_id: Int! @rules(apply: ["required"])
+    ): Book! @update
+
+    deleteBook(id: ID!): Book! @delete
+
+    
+}
+
+type User {
+    id: ID!
+    name: String!
+    email: String!
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+type Category {
+    id: ID
+    name: String!
+    books: [Book!]! @hasMany
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+type Book {
+    id: ID
+    title: String!
+    author: String!
+    image: String
+    link: String
+    description: String
+    featured: Boolean
+    category: Category! @belongsTo
+    created_at: DateTime!
+    updated_at: DateTime!
+
+}
